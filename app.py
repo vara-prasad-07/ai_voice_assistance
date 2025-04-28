@@ -9,23 +9,21 @@ app = Flask(__name__)
 CORS(app)
 
 # Configure Gemini API
-genai.configure(api_key="AIzaSyCjBLyOTr-JES2woUKBPBoNB8uyaaCOObc")
+api_key = os.getenv("GEMINI_API_KEY")
+if not api_key:
+    raise ValueError("GEMINI_API_KEY environment variable not set.")
+genai.configure(api_key=api_key)
 
 @app.route('/generate', methods=['POST'])
 def generate():
     try:
-        # Get the prompt from the request
         data = request.json
         prompt = data.get('prompt', '')
-        
-        # Generate content using Gemini
         response = genai.GenerativeModel('gemini-2.0-flash').generate_content(prompt)
-        
-        # Return the response
         return jsonify({"data": [response.text]})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    # Run the Flask app on localhost:5000
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Local testing only. In Render, gunicorn will handle it.
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
